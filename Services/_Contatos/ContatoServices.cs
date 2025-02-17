@@ -9,10 +9,11 @@ namespace Atividade03.Front.Services._Contatos
     public class ContatoServices : IContatoServices
     {
         private readonly IHttpClientFactory _httpClient;
-        private readonly string _url = "http://host.docker.internal:5075";
-        public ContatoServices(IHttpClientFactory httpClient)
+        private readonly string? _url = "";
+        public ContatoServices(IHttpClientFactory httpClient, IConfiguration config )
         {
             _httpClient = httpClient;
+            _url = config.GetValue<string>("URLAPI");
         }
 
         public async Task<ResultadoGenericoComandos> Atualizar(Contato contato)
@@ -98,7 +99,7 @@ namespace Atividade03.Front.Services._Contatos
             {
                 var client = _httpClient.CreateClient();
 
-                var result = await client.GetAsync($"{Configuracoes.UrlAPI}/api/Contato/ObterLista");
+                var result = await client.GetAsync($"{_url}/api/Contato/ObterLista");
 
                 if (result.IsSuccessStatusCode)
                 {

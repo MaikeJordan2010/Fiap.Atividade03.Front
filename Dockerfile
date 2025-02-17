@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8081
-EXPOSE 8080
+EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
@@ -26,9 +26,9 @@ RUN dotnet publish "Atividade03.Front.csproj" -c Release -o /app/publish
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 
-# # We'll copy all the contents from wwwroot in the publish
-# # folder into nginx/html for nginx to serve. The destination
-# # should be the same as what you set in the nginx.conf.
+# # # We'll copy all the contents from wwwroot in the publish
+# # # folder into nginx/html for nginx to serve. The destination
+# # # should be the same as what you set in the nginx.conf.
 COPY --from=publish /app/publish/wwwroot /usr/local/webapp/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
-EXPOSE 8080
+EXPOSE 8081

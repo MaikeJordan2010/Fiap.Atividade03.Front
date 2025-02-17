@@ -1,0 +1,155 @@
+version: '3.9'
+services:
+
+  nginx:
+    image: nginx
+    ports: 
+      - 80:80
+    expose: 
+      - 80
+    networks:
+      - teste
+
+  exporter:
+    image: nginx/nginx-prometheus-exporter
+    ports:
+      - 9113:9113
+    environment:
+      - NGINX_SCRAPE_URI="http://nginx1:80/stub_status"
+      - NGINX_EXPORTER_TELEMETRY_PATH=/stub_status
+    depends_on:
+      - nginx
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+        - 15692:15692
+    networks: 
+      - teste
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - teste
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=123456
+    networks:
+      - teste
+    depends_on:
+      - prometheus
+
+  servico.atualizar:
+    image: maikejordan2010/fiap.atividade03.atualizar:v1
+    environment: 
+      - ConnectionStrings:DefaultConnection=Server=host.docker.internal,52291;Database=FIAP_Atividade03;User Id=sa;password=123456;Encrypt=False
+      - RabbitLocal:Endereco=host.docker.internal
+      - RabbitLocal:Porta=5672
+      - RabbitLocal:Usuario=guest
+      - RabbitLocal:Senha=guest
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    networks: 
+      - teste
+    depends_on:
+      - rabbitmq
+
+  servico.excluir:
+    image: maikejordan2010/fiap.atividade03.excluir:v1
+    environment: 
+      - ConnectionStrings:DefaultConnection=Server=host.docker.internal,52291;Database=FIAP_Atividade03;User Id=sa;password=123456;Encrypt=False
+      - RabbitLocal:Endereco=host.docker.internal
+      - RabbitLocal:Porta=5672
+      - RabbitLocal:Usuario=guest
+      - RabbitLocal:Senha=guest
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    networks: 
+      - teste
+    depends_on:
+      - rabbitmq
+
+  servico.cadastrar:
+    image: maikejordan2010/fiap.atividade03.cadastrar:v1
+    environment: 
+      - ConnectionStrings:DefaultConnection=Server=host.docker.internal,52291;Database=FIAP_Atividade03;User Id=sa;password=123456;Encrypt=False
+      - RabbitLocal:Endereco=host.docker.internal
+      - RabbitLocal:Porta=5672
+      - RabbitLocal:Usuario=guest
+      - RabbitLocal:Senha=guest
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    networks: 
+      - teste
+    depends_on:
+      - rabbitmq
+
+  atividade03.api:
+    image: maikejordan2010/fiap.atividade03.api:v1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment: 
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings:DefaultConnection=Server=host.docker.internal,52291;Database=FIAP_Atividade03;User Id=sa;password=123456;Encrypt=False
+      - Cors:Urls=http://host.docker.internal:8181;https://host.docker.internal:8181;*
+      - RabbitLocal:Endereco=host.docker.internal
+      - RabbitLocal:Porta=5672
+      - RabbitLocal:Usuario=guest
+      - RabbitLocal:Senha=guest
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports: 
+      - 8080:8080
+    expose:
+      - 8080
+    networks: 
+      - teste
+    depends_on:
+      - rabbitmq
+      - servico.atualizar
+      - servico.cadastrar
+      - servico.excluir
+
+  atividade03.front:
+    image: atividade03.front
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment: 
+      - ASPNETCORE_ENVIRONMENT=Development
+      - URLAPI="http://host.docker.internal:8080"
+      - URLLOCAL="http://host.docker.internal:8081"
+      - URLAPIBRASIL="https://brasilapi.com.br"
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports: 
+      - 8081:8081
+    expose:
+      - 8081
+    networks: 
+      - teste
+    depends_on:
+      - rabbitmq
+      - servico.cadastrar
+      - servico.atualizar
+      - servico.excluir
+      - atividade03.api
+      - nginx
+
+networks:
+  teste:
+    driver: bridge

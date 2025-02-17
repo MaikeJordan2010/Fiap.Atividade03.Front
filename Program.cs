@@ -14,34 +14,27 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddHttpClient();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-
 builder.Services.AddScoped<IContatoComandos, ContatoComandos>();
 builder.Services.AddScoped<IContatoConsultas, ContatoConsultas>();
 builder.Services.AddScoped<IContatoServices, ContatoServices>();
 builder.Services.AddScoped<IObterMunicipios, ObterMunicipios>();
+builder.Services.AddMudServices();
 //builder.Services.AddHttpClient();
 
+var config = builder.Configuration;
+string urlApi = config.GetValue<string>("URLAPI");
+string urlBrasilApi = config.GetValue<string>("URLBRASILAPI");
+string urlLocal = config.GetValue<string>("URLLOCAL");
 
 builder.Services.AddHttpClient(
-               Configuracoes.HttpClientName,
+               "URLS_LIBERADAS",
                x =>
                {
-                   x.BaseAddress = new Uri(Configuracoes.UrlAPIBrasil);
-                   x.BaseAddress = new Uri(Configuracoes.UrlLocal);
-                   x.BaseAddress = new Uri(Configuracoes.UrlAPI);
+                   x.BaseAddress = new Uri(urlApi);
+                   x.BaseAddress = new Uri(urlBrasilApi);
+                   x.BaseAddress = new Uri(urlLocal);
                }
     );
-
-//builder.Services.AddHttpClient(
-//               "API",
-//               x =>
-//               {
-//                   //x.BaseAddress = new Uri(Configuracoes.UrlAPIBrasil);
-//                   x.BaseAddress = new Uri(Configuracoes.UrlLocal);
-//                   x.BaseAddress = new Uri(Configuracoes.UrlAPI);
-//                   x.DefaultRequestHeaders.UserAgent.ParseAdd("HttpClient/8.0");
-//               }
-//    );
 
 builder.Services.AddMudServices();
 await builder.Build().RunAsync();
